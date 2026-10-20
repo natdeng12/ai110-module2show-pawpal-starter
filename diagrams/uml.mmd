@@ -13,3 +13,41 @@ classDiagram
     }
 
     ClassName --> AnotherClass : relationship
+
+classDiagram
+    class Owner {
+        +str name
+        +int available_time
+        +str preferences
+        +add_pet()
+        +add_task()
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +str special_needs
+        +update_info()
+        +view_info()
+    }
+
+    class Task {
+        +str title
+        +int duration_minutes
+        +str priority
+        +bool completed
+        +mark_complete()
+        +update_task()
+    }
+
+    class Scheduler {
+        +generate_plan()
+        +view_plan()
+    }
+
+    Owner "1" --> "0..*" Pet : owns
+    Pet "1" --> "0..*" Task : has
+    Scheduler ..> Owner : reads preferences
+    Scheduler ..> Pet : reads pet info
+    Scheduler ..> Task : organizes tasks
