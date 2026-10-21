@@ -102,12 +102,15 @@ class Pet:
         Daily tasks get a new copy due 1 day after the old due date, and
         weekly tasks get one due 7 days after. The completed task stays in
         the list as history. Returns the new task, or None for "as_needed"
-        tasks, which do not repeat.
+        tasks, which do not repeat, and for tasks that were already completed.
 
         Raises ValueError if the task does not belong to this pet.
         """
-        if task not in self.tasks:
+        if not any(saved_task is task for saved_task in self.tasks):
             raise ValueError("This task does not belong to this pet.")
+
+        if task.is_completed:
+            return None
 
         task.mark_complete()
 
@@ -140,7 +143,7 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Add a pet to this owner, skipping it if it is already added."""
-        if pet not in self.pets:
+        if not any(existing_pet is pet for existing_pet in self.pets):
             self.pets.append(pet)
 
     def remove_pet(self, pet: Pet) -> None:

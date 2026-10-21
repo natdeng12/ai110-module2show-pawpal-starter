@@ -123,3 +123,46 @@ Describe your app in numbered steps so a reader can follow along without watchin
 5. <!-- Add more steps as needed -->
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
+## Testing PawPal+
+
+Run the automated test suite from the project root directory using:
+
+```bash
+python -m pytest
+```
+
+### What the Tests Cover
+
+The automated tests verify the correctness and reliability of PawPal+ features, including:
+
+- **Task sorting:** Checks that tasks are returned in chronological order, including edge cases such as equal times and empty lists.
+- **Task filtering:** Tests filtering by pet name, completion status, and combinations of filters.
+- **Recurring tasks:** Verifies that completing daily or weekly tasks creates the next occurrence with the correct date and task details.
+- **Conflict detection:** Checks whether overlapping tasks are identified and back-to-back tasks are handled correctly.
+- **Schedule generation:** Tests tasks that fit within the owner's available time, tasks that must be skipped, and cases with no available time.
+- **Validation and edge cases:** Tests invalid task ownership, duplicate pet details, and prevents duplicate recurring tasks when a task is completed more than once.
+
+### Successful Test Run
+
+The latest test run completed with **33 tests passed**.
+
+Paste the complete terminal output from your successful `python -m pytest` run here:
+
+```text
+==================================== test session starts =====================================
+platform win32 -- Python 3.13.15, pytest-9.1.1, pluggy-1.7.0
+rootdir: C:\Users\Kenny\OneDrive\Documents\Codepath\Pawpa\ai110-module2show-pawpal-starter
+plugins: anyio-4.15.1
+collected 33 items
+
+tests\test_pawpal.py .................................                                  [100%]
+
+===================================== 33 passed in 0.13s =====================================
+```
+
+### Confidence Level
+
+**Confidence Level: 4/5 stars (★★★★☆)**
+
+The test suite covers the core scheduling features and a variety of edge cases. All 33 tests passed in the latest run, increasing confidence in the system's reliability. However, passing tests cannot guarantee that every possible bug has been found, so additional testing may still be beneficial.
