@@ -59,6 +59,9 @@ These changes make the relationships clearer and prepare the system for implemen
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+### 2b. Tradeoffs
+
+One tradeoff in my scheduler is that conflict detection checks whether the durations of two tasks overlap, rather than only checking whether they start at exactly the same time. This makes the scheduler more useful because two tasks can conflict even when they start at different times. For example, a 30-minute walk starting at 8:30 AM conflicts with a 10-minute feeding task starting at 8:45 AM. However, checking multiple task pairs adds some complexity to the algorithm. I chose to keep this approach because detecting overlapping durations is more accurate for planning pet care, and sorting tasks by start time helps reduce unnecessary comparisons.
 
 ---
 

@@ -83,14 +83,34 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ includes additional scheduling features to help pet owners organize care tasks more effectively.
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+### Sorting Tasks
+
+The `Scheduler.sort_by_time()` method sorts tasks by their scheduled start time, from earliest to latest. This makes it easier to view a daily care schedule in chronological order.
+
+### Filtering Tasks
+
+The `Scheduler.filter_tasks()` method filters tasks using optional criteria:
+- **Pet name:** Shows tasks belonging to a specific pet. Pet names are matched without distinguishing uppercase and lowercase letters.
+- **Completion status:** Shows completed tasks or pending tasks.
+- Both filters can be used together.
+
+### Conflict Detection
+
+The `Scheduler.detect_conflicts()` method checks whether scheduled tasks overlap based on their start times and durations. It returns warning messages describing conflicting tasks rather than stopping the program with an error. Tasks scheduled back-to-back are allowed.
+
+The method sorts tasks by start time and stops checking later tasks when they can no longer overlap with the current task.
+
+### Recurring Tasks
+
+The `Pet.complete_task()` method marks a task as completed and creates its next occurrence when the task has a daily or weekly frequency. Daily tasks are scheduled one day after their due date, and weekly tasks are scheduled seven days after their due date. Tasks marked `as_needed` do not automatically repeat.
+
+### Task Time and Date
+
+Each `Task` has a scheduled time and a due date. The `Task.get_start_minutes()` method converts the scheduled time into minutes since midnight to support time-based calculations.
+
+The task time is stored in `HH:MM` format using a 24-hour clock.
 
 ## 📸 Demo Walkthrough
 

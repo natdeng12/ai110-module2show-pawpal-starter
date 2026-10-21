@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass, field
 from typing import Literal
+from datetime import date, timedelta
 
 
 Priority = Literal["low", "medium", "high"]
@@ -14,6 +15,8 @@ class Task:
     priority: Priority = "medium"
     frequency: Frequency = "daily"
     is_completed: bool = False
+    time: str = "08:00"
+    due_date: date = field(default_factory=date.today)
 
     def __post_init__(self) -> None:
         """Check that the duration, priority, and frequency are valid after creation."""
@@ -27,6 +30,15 @@ class Task:
             raise ValueError(
                 "Frequency must be daily, weekly, or as_needed."
             )
+        if (
+        len(self.time) != 5
+        or self.time[2] != ":"
+        or not self.time[:2].isdigit()
+        or not self.time[3:].isdigit()
+        or not (0 <= int(self.time[:2]) <= 23)
+        or not (0 <= int(self.time[3:]) <= 59)
+    ):
+            raise ValueError("Time must be in HH:MM format (00:00 to 23:59).")
 
     def mark_complete(self) -> None:
         """Mark this task as done."""
@@ -44,6 +56,17 @@ class Task:
             "high": 3,
         }
         return priority_values[self.priority]
+    
+    def get_start_minutes(self) -> int:
+        """Return the task's start time as minutes since midnight.
+
+        For example, "08:15" becomes 8 * 60 + 15 = 495. This assumes
+        `time` is a valid "HH:MM" string, which __post_init__ checks
+        when the task is created.
+        """
+        hours = int(self.time[:2])
+        minutes = int(self.time[3:])
+        return hours * 60 + minutes
 
 
 @dataclass
@@ -73,6 +96,39 @@ class Pet:
             task for task in self.tasks
             if not task.is_completed
         ]
+    def complete_task(self, task: Task) -> Task | None:
+        """Mark a task complete and schedule its next occurrence if it repeats.
+
+        Daily tasks get a new copy due 1 day after the old due date, and
+        weekly tasks get one due 7 days after. The completed task stays in
+        the list as history. Returns the new task, or None for "as_needed"
+        tasks, which do not repeat.
+
+        Raises ValueError if the task does not belong to this pet.
+        """
+        if task not in self.tasks:
+            raise ValueError("This task does not belong to this pet.")
+
+        task.mark_complete()
+
+        if task.frequency == "daily":
+            next_date = task.due_date + timedelta(days=1)
+        elif task.frequency == "weekly":
+            next_date = task.due_date + timedelta(days=7)
+        else:
+            return None
+
+        next_task = Task(
+            description=task.description,
+            duration_minutes=task.duration_minutes,
+            priority=task.priority,
+            frequency=task.frequency,
+            time=task.time,
+            due_date=next_date,
+        )
+
+        self.add_task(next_task)
+        return next_task
 
 
 @dataclass
@@ -135,6 +191,83 @@ class Scheduler:
                 item[1].duration_minutes,
             ),
         )
+        
+    def sort_by_time(self, tasks: list[tuple[Pet, Task]]) -> list[tuple[Pet, Task]]:
+        """Return a new list of (pet, task) pairs sorted by time, earliest first.
+
+        Times are compared as "HH:MM" text, which sorts correctly because
+        hours and minutes always have two digits. Tasks with the same time
+        keep their original order. Due dates are not considered, and the
+        original list is not changed.
+        """
+        return sorted(tasks, key=lambda item: item[1].time)
+
+    def filter_tasks(
+        self,
+        pet_name: str | None = None,
+        completed: bool | None = None,
+    ) -> list[tuple[Pet, Task]]:
+        """Return (pet, task) pairs that match the given filters.
+
+        Leave a filter as None to skip it. The pet name match ignores
+        capitalization, so "mochi" matches "Mochi". Unlike collect_tasks(),
+        this looks at all tasks, including completed ones, so
+        completed=True can find finished tasks.
+        """
+        matching_tasks = []
+
+        for pet in self.owner.get_pets():
+            for task in pet.get_tasks():
+                if pet_name is not None and pet.name.lower() != pet_name.lower():
+                    continue
+
+                if completed is not None and task.is_completed != completed:
+                    continue
+
+                matching_tasks.append((pet, task))
+
+        return matching_tasks
+    
+
+    def detect_conflicts(
+        self,
+        tasks: list[tuple[Pet, Task]],
+    ) -> list[str]:
+        """Return a warning message for each pair of tasks that overlap in time.
+
+        Tasks overlap when one starts before the other ends. Back-to-back
+        tasks (one ends at 08:30, the next starts at 08:30) are allowed.
+        Tasks for different pets still count, since one owner does them all.
+        Returns an empty list if there are no conflicts.
+
+        Limitation: due dates are ignored, so tasks on different days at
+        the same time are reported as conflicts. Pass in only one day's
+        tasks to avoid this.
+        """
+        sorted_tasks = self.sort_by_time(tasks)
+        conflicts = []
+
+        for i in range(len(sorted_tasks)):
+            pet1, task1 = sorted_tasks[i]
+            start1 = task1.get_start_minutes()
+            end1 = start1 + task1.duration_minutes
+
+            for j in range(i + 1, len(sorted_tasks)):
+                pet2, task2 = sorted_tasks[j]
+                start2 = task2.get_start_minutes()
+
+                # Later tasks cannot overlap once they start
+                # at or after the current task's end.
+                if start2 >= end1:
+                    break
+
+                conflicts.append(
+                    f"{task1.description} ({pet1.name}) overlaps "
+                    f"{task2.description} ({pet2.name})."
+                )
+
+        return conflicts
+
 
     def generate_plan(self) -> list[tuple[Pet, Task]]:
         """Build today's plan by adding sorted tasks that fit in the owner's available time."""
