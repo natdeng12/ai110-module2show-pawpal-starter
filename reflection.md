@@ -70,7 +70,10 @@ One tradeoff in my scheduler is that conflict detection checks whether the durat
 **a. How you used AI**
 
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
+I used Chatgpt as an Asistant to guide me step by step for the assignment, and then I manually added the functions in the files. However, I did come across with bugs that I had difficult time to solve, so I used Claude to help me identify the the bug and solve it. Claude solved the bug successfully.
+
 - What kinds of prompts or questions were most helpful?
+When I writing prompts, I always as the AI to explain the solution to me as I am a third grader. I also ask AI not to change and add without asking me before hand.
 
 ### AI Collaboration Reflection
 
@@ -83,7 +86,10 @@ To verify the implementation, I ran the demo script with `python main.py` and ra
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
+Claude whated to replace my first Mermaid draft with the new final one, which I rejected because the assignment required it to have the first draft and the second one.
+
 - How did you evaluate or verify what the AI suggested?
+I went with the flow. I am still learning.
 
 ---
 
@@ -93,11 +99,13 @@ To verify the implementation, I ran the demo script with `python main.py` and ra
 
 - What behaviors did you test?
 - Why were these tests important?
+I tested task creation, completion, sorting by time and priority, filtering, schedule generation, and conflict detection. These tests helped verify that the scheduler behaves correctly and handles common errors and edge cases.
 
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
 - What edge cases would you test next if you had more time?
+I am semi confident in my scheduler because the automated tests passed, including edge cases. With more time, I would test overlapping tasks with different durations, schedules with limited available time, and invalid or missing inputs.
 
 ---
 
@@ -106,11 +114,15 @@ To verify the implementation, I ran the demo script with `python main.py` and ra
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+I am most satisfied with the Scheduler algorithms and how they make PawPal+ more useful by organizing tasks, filtering results, and identifying scheduling conflicts.
+
 
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
+I would improve the UI to make task management and scheduling clearer and easier to use. I would also expand testing for more complex scheduling scenarios.
 
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+I learned that AI is most useful as a coding assistant when I review its suggestions, test the implementation, and understand the changes instead of blindly accepting them.

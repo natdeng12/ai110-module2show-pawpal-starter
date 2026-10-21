@@ -557,3 +557,65 @@ def test_completing_same_daily_task_twice_does_not_duplicate_next_occurrence():
     pet.complete_task(task)
 
     assert len(pet.tasks) == 2
+
+
+def test_find_next_available_slot_with_no_tasks():
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    assert scheduler.find_next_available_slot([], 30, start_time="08:00") == "08:00"
+
+
+def test_find_next_available_slot_uses_gap_between_tasks():
+    buddy = Pet("Buddy", "dog", 3)
+    tasks = [
+        (buddy, Task("Walk", 30, time="08:00")),
+        (buddy, Task("Grooming", 20, time="09:00")),
+    ]
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    # 08:30 to 09:00 is free, and back-to-back tasks are allowed.
+    assert scheduler.find_next_available_slot(tasks, 30, start_time="08:00") == "08:30"
+
+
+def test_find_next_available_slot_skips_overlapping_tasks():
+    buddy = Pet("Buddy", "dog", 3)
+    mochi = Pet("Mochi", "cat", 2)
+    tasks = [
+        (buddy, Task("Walk", 30, time="08:00")),
+        (mochi, Task("Feed", 10, time="08:20")),
+        (buddy, Task("Grooming", 20, time="08:40")),
+    ]
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    # The 08:30-08:40 gap is too short for 15 minutes, so the
+    # first fit is right after Grooming ends.
+    assert scheduler.find_next_available_slot(tasks, 15, start_time="08:00") == "09:00"
+
+
+def test_find_next_available_slot_when_start_is_inside_a_task():
+    buddy = Pet("Buddy", "dog", 3)
+    tasks = [(buddy, Task("Walk", 60, time="07:30"))]
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    assert scheduler.find_next_available_slot(tasks, 10, start_time="08:00") == "08:30"
+
+
+def test_find_next_available_slot_returns_none_when_day_is_full():
+    buddy = Pet("Buddy", "dog", 3)
+    tasks = [(buddy, Task("Overnight care", 60, time="23:00"))]
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    assert scheduler.find_next_available_slot(tasks, 30, start_time="22:45") is None
+
+
+def test_find_next_available_slot_can_end_exactly_at_midnight():
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    assert scheduler.find_next_available_slot([], 30, start_time="23:30") == "23:30"
+
+
+def test_find_next_available_slot_rejects_invalid_duration():
+    scheduler = Scheduler(Owner("Alex", 60))
+
+    with pytest.raises(ValueError):
+        scheduler.find_next_available_slot([], 0)

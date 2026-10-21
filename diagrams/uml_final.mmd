@@ -1,0 +1,67 @@
+classDiagram
+    %% Final PawPal+ class diagram, matching pawpal_system.py.
+    %% daily_plan, skipped_tasks, and several method results are lists of (Pet, Task) pairs.
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +list~Pet~ pets
+        +list~str~ preferences
+        +add_pet(pet) None
+        +remove_pet(pet) None
+        +get_pets() list~Pet~
+        +add_task(pet, task) None
+        +get_all_tasks() list
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +list~str~ special_needs
+        +list~Task~ tasks
+        +add_task(task) None
+        +remove_task(task) None
+        +get_tasks() list~Task~
+        +get_pending_tasks() list~Task~
+        +complete_task(task) Task
+    }
+
+    class Task {
+        +str description
+        +int duration_minutes
+        +Priority priority
+        +Frequency frequency
+        +bool is_completed
+        +str time
+        +date due_date
+        +mark_complete() None
+        +mark_incomplete() None
+        +get_priority_value() int
+        +get_start_minutes() int
+    }
+
+    class Scheduler {
+        +Owner owner
+        +list daily_plan
+        +list skipped_tasks
+        +collect_tasks() list
+        +sort_by_priority(tasks) list
+        +sort_by_time(tasks) list
+        +filter_tasks(pet_name, completed) list
+        +detect_conflicts(tasks) list~str~
+        +generate_plan() list
+        +display_plan() None
+        +explain_plan() str
+    }
+
+    note for Task "priority: low, medium, or high\nfrequency: daily, weekly, or as_needed\ntime: HH:MM text\nValues are checked when a Task is created"
+    note for Pet "complete_task() returns the next Task,\nor None for as_needed or already-completed tasks"
+
+    Owner "1" o-- "0..*" Pet : pets
+    Pet "1" o-- "0..*" Task : tasks
+    Pet ..> Task : creates next occurrence
+    Owner ..> Task : adds to a pet
+    Scheduler "1" --> "1" Owner : owner
+    Scheduler ..> Pet : pairs with tasks
+    Scheduler ..> Task : sorts, filters, plans

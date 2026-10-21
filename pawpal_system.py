@@ -271,6 +271,50 @@ class Scheduler:
 
         return conflicts
 
+    def find_next_available_slot(
+        self,
+        tasks: list[tuple[Pet, Task]],
+        duration_minutes: int,
+        start_time: str = "00:00",
+    ) -> str | None:
+        """Return the earliest "HH:MM" time when a task of this length fits.
+
+        The search starts at `start_time` and skips past any task that
+        would overlap, using the same rule as detect_conflicts():
+        back-to-back tasks are allowed. The new task must finish by
+        midnight (24:00). Returns None if no gap is long enough.
+
+        Raises ValueError if the duration or start time is invalid.
+
+        Limitation: due dates are ignored, like detect_conflicts().
+        Pass in only one day's tasks.
+        """
+        # Reuse Task's checks for a positive duration and a valid time.
+        start = Task("slot", duration_minutes, time=start_time).get_start_minutes()
+        end_of_day = 24 * 60
+
+        candidate = start
+
+        for _, task in self.sort_by_time(tasks):
+            task_start = task.get_start_minutes()
+            task_end = task_start + task.duration_minutes
+
+            # This task ends before the candidate slot begins.
+            if task_end <= candidate:
+                continue
+
+            # The gap before this task is long enough.
+            if task_start >= candidate + duration_minutes:
+                break
+
+            # The task overlaps the candidate slot, so try right after it.
+            candidate = task_end
+
+        if candidate + duration_minutes > end_of_day:
+            return None
+
+        return f"{candidate // 60:02d}:{candidate % 60:02d}"
+
 
     def generate_plan(self) -> list[tuple[Pet, Task]]:
         """Build today's plan by adding sorted tasks that fit in the owner's available time."""

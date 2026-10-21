@@ -1,5 +1,7 @@
 import streamlit as st
+from datetime import time
 from pawpal_system import Owner, Pet, Task, Scheduler
+
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
@@ -88,13 +90,17 @@ st.subheader("Add a Care Task")
 owner = st.session_state.owner
 
 if owner.pets:
-    selected_pet = st.selectbox(
+    selected_pet_name = st.selectbox(
         "Which pet is this task for?",
-        owner.pets,
-        format_func=lambda pet: pet.name,
+        [pet.name for pet in owner.get_pets()],
     )
 
-    col1, col2, col3 = st.columns(3)
+    selected_pet = next(
+        pet for pet in owner.get_pets()
+        if pet.name == selected_pet_name
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         task_title = st.text_input(
@@ -109,12 +115,18 @@ if owner.pets:
             max_value=240,
             value=20,
         )
-
+        
     with col3:
         priority = st.selectbox(
             "Priority",
             ["low", "medium", "high"],
             index=2,
+        )
+
+    with col4:
+        task_time = st.time_input(
+            "Start time",
+            value=time(8, 0),
         )
 
     if st.button("Add task"):
@@ -125,6 +137,7 @@ if owner.pets:
                 description=task_title.strip(),
                 duration_minutes=int(duration),
                 priority=priority,
+                time=task_time.strftime("%H:%M"),
             )
             owner.add_task(selected_pet, new_task)
             st.success(f"Added '{task_title}' for {selected_pet.name}!")
@@ -155,6 +168,7 @@ st.divider()
 
 st.subheader("Build Schedule")
 
+
 if st.button("Generate schedule"):
     scheduler = Scheduler(owner)
     schedule = scheduler.generate_plan()
@@ -162,13 +176,40 @@ if st.button("Generate schedule"):
     if schedule:
         st.markdown("### Today's Schedule")
 
-        for pet, task in schedule:
-            st.write(
-                f"🐾 **{pet.name}** — {task.description} "
-                f"({task.duration_minutes} minutes, {task.priority} priority)"
-            )
+        # Sort scheduled tasks by start time.
+        sorted_schedule = scheduler.sort_by_time(schedule)
+
+        schedule_rows = []
+
+        for pet, task in sorted_schedule:
+            schedule_rows.append({
+                "Time": task.time,
+                "Pet": pet.name,
+                "Task": task.description,
+                "Duration (minutes)": task.duration_minutes,
+                "Priority": task.priority,
+            })
+
+        st.table(schedule_rows)
+
+        # Check for overlapping tasks in the generated schedule.
+        conflicts = scheduler.detect_conflicts(schedule)
+
+        st.markdown("### Schedule Conflict Warnings")
+
+        if conflicts:
+            for conflict in conflicts:
+                st.warning(
+                    f"{conflict} Please review the start times "
+                    "and reschedule a task if necessary."
+                )
+        else:
+            st.success("No overlapping tasks detected in this schedule.")
+
     else:
         st.info("No pending tasks fit into the available time.")
 
-    st.markdown("### Schedule Notes")
-    st.write(scheduler.explain_plan())
+    # Only explain the plan when there were pending tasks to choose from.
+    if schedule or scheduler.skipped_tasks:
+        st.markdown("### Schedule Notes")
+        st.write(scheduler.explain_plan())
